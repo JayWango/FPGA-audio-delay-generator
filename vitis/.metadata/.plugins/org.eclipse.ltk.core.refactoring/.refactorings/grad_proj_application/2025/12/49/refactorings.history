@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;grad_proj_application/src/README.txt&apos; to &apos;README.md&apos;" description="Rename resource &apos;README.txt&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/README.txt" name="README.md" stamp="1764629715589" updateReferences="true"/>
-</session>

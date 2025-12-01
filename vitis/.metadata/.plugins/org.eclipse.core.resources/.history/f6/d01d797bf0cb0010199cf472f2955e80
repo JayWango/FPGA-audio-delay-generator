@@ -1,2 +1,0 @@
-#define CLOCK_FREQ 100000000  // 100 MHz
-#define SAMPLE_RATE 44100     // 44.1 kHz

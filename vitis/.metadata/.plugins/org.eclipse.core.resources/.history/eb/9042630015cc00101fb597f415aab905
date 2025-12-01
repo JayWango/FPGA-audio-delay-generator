@@ -1,7 +1,0 @@
-#include "bsp.h"
-
-int main() {
-	BSP_init();
-
-	return 0;
-}

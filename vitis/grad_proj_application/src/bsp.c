@@ -21,10 +21,6 @@ void BSP_init() {
 void sampling_ISR() {
 	Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, 0);
 	u32 curr_sample = Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
-//	if (count >= 44100) {
-//		count = 0;
-//		xil_printf("%lu\r\n", curr_sample);
-//	}
 
 	static int count = 0;
 	static int toggle = 0;
@@ -38,10 +34,10 @@ void sampling_ISR() {
 	}
 
 	if (toggle) {
-		XTmrCtr_SetResetValue(&pwm_tmr, 1, 100);
+		XTmrCtr_SetResetValue(&pwm_tmr, 1, 1);
 	}
 	else {
-		XTmrCtr_SetResetValue(&pwm_tmr, 1, 2000);
+		XTmrCtr_SetResetValue(&pwm_tmr, 1, RESET_VALUE);
 	}
 
 	/*

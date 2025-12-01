@@ -1,6 +1,0 @@
-// this file contains all the definitions for the circular buffer
-
-#define BUFFER_SIZE    20000
-#define DELAY_SAMPLES  10000
-
-volatile u32 circular_buffer[BUFFER_SIZE];
