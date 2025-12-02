@@ -9,6 +9,8 @@ volatile u32 circular_buffer[BUFFER_SIZE] = {0};
 volatile u32 read_head = 0;
 volatile u32 write_head = 0;
 
+volatile static u32 count = 0;
+
 void BSP_init() {
 	// interrupt controller
 	XIntc_Initialize(&sys_intc, XPAR_MICROBLAZE_0_AXI_INTC_DEVICE_ID);
@@ -22,34 +24,24 @@ void sampling_ISR() {
 	Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, 0);
 	u32 curr_sample = Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
 
-	static int count = 0;
-	static int toggle = 0;
-
-	count++;
-
-	if (count > 44100) {
-		toggle = !toggle;
-		count = 0;
-		xil_printf("%lu\r\n", curr_sample);
-	}
-
-	if (toggle) {
-		XTmrCtr_SetResetValue(&pwm_tmr, 1, 1);
-	}
-	else {
-		XTmrCtr_SetResetValue(&pwm_tmr, 1, RESET_VALUE);
-	}
-
 	/*
-	 * Max value of curr_sample is 65,535 (16-bit PDM mic output)
+	 * Max value of curr_sample is [fill in max val here]
 	 * Max value of the PWM is the period of the pulse, RESET_VALUE (2267)
-	 * To scale the mic sample to fit within the PWM period, divide it by 2^5
+	 * To scale the mic sample to fit within the PWM period, divide it by 2^n [fill out n]
 	 */
-	//u32 pwm_sample = curr_sample >> 5;
-	//if (pwm_sample > RESET_VALUE) {pwm_sample = RESET_VALUE;} // clip audio to a max ceiling
+	u32 pwm_sample = curr_sample >> 22;
+	count++;
+	if (count >= 44100) {
+		xil_printf("curr_sample: %lu\r\n", curr_sample);
+		xil_printf("pwm_sample: %lu\r\n", pwm_sample);
+		count = 0;
+	}
 
-	//XTmrCtr_SetResetValue(&pwm_tmr, 1, pwm_sample);
+	if (pwm_sample > RESET_VALUE) {pwm_sample = RESET_VALUE;} // clip audio to a max ceiling
 
+	XTmrCtr_SetResetValue(&pwm_tmr, 1, pwm_sample);
+
+	// note: try commenting this out when things work to see if it's necessary to write 0 to the baseaddr
 	Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR, 0);
 
 	// Acknowledge the interrupt by clearing the interrupt bit in the timer control status register - referenced lab2b code
