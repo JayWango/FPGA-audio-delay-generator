@@ -9,8 +9,6 @@ XGpio pushBtn;
 XTmrCtr sampling_tmr; // axi_timer_0
 XTmrCtr pwm_tmr; // axi_timer_1
 
-#define DEBOUNCE_TIME 7500
-
 volatile u32 circular_buffer[BUFFER_SIZE] = {0};
 volatile u32 read_head = READ_START;
 volatile u32 write_head = 0;
@@ -20,11 +18,11 @@ volatile u32 delay_samples = DELAY_SAMPLES_DEFAULT;
 volatile u32 samples_written = 0;
 
 // variables used in sampling_ISR() for printing statistics and collecting the DC offset of the raw data
-volatile static u32 count = 0;
 static int32_t dc_bias = 0;
 static int first_run = 1; // just a simple flag
 
 static int32_t hp_filter_state = 0;
+static int32_t lp_filter_state = 0;
 static int32_t agc_gain = 256;
 
 volatile u32 btn_prev_press_time = 0;
@@ -43,35 +41,30 @@ void BSP_init() {
 	init_sampling_timer();
 }
 
-// samples are grabbed from the streamer at 48.125 kHz, so need to modify this sampling ISR to grab data at the same frequency
+// samples are grabbed from the streamer at 48828.125 Hz, so need to modify this sampling ISR to grab data at the same frequency
 // grab more than 1 sample in each ISR, for example grab 5 at a time and print out the sample index to ensure that we aren't skipping samples
-// currently, there's a fundamental mismatch between our sampling ISR (44.1 kHz) and the stream grabber (48.125 kHz)
-// integrate encoder to change the wet/dry value of the selected effect
-// for the delay effect, i believe we will need 2 knobs to change the delay spacing and the dry/wet mix; we can use the encoder button press to toggle a state to change between the 2
-// effect ideas: reverb, bass enhancement
+// currently, there's a fundamental mismatch between our sampling ISR (44.1 kHz) and the stream grabber (48.828125 kHz)
 void sampling_ISR() {
-//    // refer to stream_grabber.c from lab3a for why this is necessary
-//	// BASEADDR + 4 is the offset of where you "select" which index to read from the stream grabber
-//	// BASEADDR + 8 is the offset of where you actually read the raw data of the mic
-//    Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, 0);
-//    u32 raw_data = Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
-//
-//    // cast the u32 to int32 so that the raw data is a bipolar signal (audio waves have pos/neg values)
-//    int32_t curr_sample = (int32_t) raw_data;
-
 	sys_tick_counter++;
 
-	int32_t samples[NUM_INPUT_SAMPLES];
-	for (int i = 0; i < NUM_INPUT_SAMPLES; i++) {
-		Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, i);
-		samples[i] = (int32_t)Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
-	}
+	// jason note: i realized that it doesn't make sense to have a for loop within the ISR; if we are doing this interrupt at the same rate as the stream grabber, we would never read the next index of the grabber
+	// refer to stream_grabber.c from lab3a for why this is necessary
+	// BASEADDR + 4 is the offset of where you "select" which index to read from the stream grabber
+	// BASEADDR + 8 is the offset of where you actually read the raw data of the mic
+//	int32_t samples[NUM_INPUT_SAMPLES];
+//	for (int i = 0; i < NUM_INPUT_SAMPLES; i++) {
+//		Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, i);
+//		samples[i] = (int32_t)Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
+//	}
+//
+//	int32_t sum = 0;
+//	for (int i = 0; i < NUM_INPUT_SAMPLES; i++) {
+//		sum += samples[i];
+//	}
+//	int32_t curr_sample = sum / NUM_INPUT_SAMPLES;
 
-	int32_t sum = 0;
-	for (int i = 0; i < NUM_INPUT_SAMPLES; i++) {
-		sum += samples[i];
-	}
-	int32_t curr_sample = sum / NUM_INPUT_SAMPLES;
+	Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, 0);
+	int32_t curr_sample = (int32_t) Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
 
     // set first sample from mic as the dc_bias
     if (first_run) {
@@ -82,23 +75,28 @@ void sampling_ISR() {
 	// self note: try to comment out this exponential moving average and see how it affects our audio signal
     // Exponential Moving Average
 	// this line expands to: dc_bias = dc_bias + ((curr_sample - dc_bias) >> 10);
-    dc_bias += (curr_sample - dc_bias) >> 10;
+    //dc_bias += (curr_sample - dc_bias) >> 10;
 
     // remove the DC offset from the current sample
     int32_t audio_signal = curr_sample - dc_bias;
 
     // HIGH-PASS FILTER (removes low-frequency rumble)
-    int32_t hp_input = audio_signal;
-    hp_filter_state = hp_filter_state + ((hp_input - hp_filter_state) * HP_FILTER_COEFF >> 8);
-    int32_t filtered_signal = hp_input - hp_filter_state;
+    // int32_t hp_input = audio_signal;
+//    hp_filter_state = hp_filter_state + ((audio_signal - hp_filter_state) * HP_FILTER_COEFF >> 8);
+//    int32_t filtered_signal = audio_signal - hp_filter_state;
+//
+//    int32_t hpf_signal = filtered_signal >> 15;
 
-    int32_t hpf_signal = filtered_signal >> 15;
+    // LPF filter to remove squeals?
+    int32_t lp_input = audio_signal;
+    lp_filter_state = lp_filter_state + ((lp_input - lp_filter_state) * LP_FILTER_COEFF >> 8);
 
     // now that we preserve the sign, we can shift safely
 	// scale the signal down to a nice number ideally between -1024 and 1024
-    int32_t scaled_signal = audio_signal >> 15;
-//    int32_t scaled_signal = filtered_signal >> 15;
-    int32_t scaled_signal_before_agc = scaled_signal;
+    //int32_t scaled_signal = audio_signal >> 16; // change num back to 15 if it sounds bad
+    int32_t scaled_signal = lp_filter_state >> 16;
+
+    //int32_t scaled_signal_before_agc = scaled_signal;
 
     // AUTOMATIC GAIN CONTROL (prevents feedback)
     // Detect input level and reduce gain when input is loud
@@ -208,7 +206,8 @@ void sampling_ISR() {
     int32_t output_signal = mixed_signal;
     if (output_signal > OUTPUT_LIMIT_THRESHOLD) {
     	output_signal = OUTPUT_LIMIT_THRESHOLD;
-    } else if (output_signal < -OUTPUT_LIMIT_THRESHOLD) {
+    }
+    else if (output_signal < -OUTPUT_LIMIT_THRESHOLD) {
     	output_signal = -OUTPUT_LIMIT_THRESHOLD;
     }
 
@@ -222,20 +221,7 @@ void sampling_ISR() {
     if (pwm_sample < 0) pwm_sample = 0;
     if (pwm_sample > RESET_VALUE) pwm_sample = RESET_VALUE;
 
-    // print data - remove in the final product to make this ISR faster (printing in ISR is generally bad)
-//    count++;
-//	if (count >= 48000) {
-////		xil_printf("raw_sample: %lu\r\n", raw_data);
-//		xil_printf("curr_sample: %ld\r\n", curr_sample);
-//		xil_printf("dc_bias: %ld\r\n", dc_bias);
-//		xil_printf("audio_signal: %ld\r\n", audio_signal);
-//		xil_printf("scaled_signal: %ld\r\n", scaled_signal);
-//		xil_printf("pwm_sample: %ld\r\n", pwm_sample);
-//		xil_printf("\r\n");
-//		count = 0;
-//	}
-//    count++;
-//	if (count >= 48000) {  // Print once per second at 48kHz
+	if (sys_tick_counter >= 24000) {  // Print once per second at 48kHz
 //		xil_printf("=== Signal Processing Debug ===\r\n");
 //		xil_printf("Raw sample:        %ld\r\n", curr_sample);
 //		xil_printf("DC bias:            %ld\r\n", dc_bias);
@@ -244,17 +230,17 @@ void sampling_ISR() {
 //		xil_printf("After HP filter:    %ld\r\n", filtered_signal);
 //		xil_printf("After scaling w/HPF: %ld\r\n", hpf_signal);
 //		xil_printf("After scaling:      %ld\r\n", scaled_signal_before_agc);
-//		xil_printf("Input level:        %ld (threshold: %d)\r\n", input_level, AGC_THRESHOLD);
+		xil_printf("Input level:        %ld (threshold: %d)\r\n", input_level, AGC_THRESHOLD);
 //		xil_printf("AGC gain:           %ld (%ld%%)\r\n", agc_gain, (agc_gain * 100) / 256);
 //		xil_printf("After AGC:          %ld\r\n", agc_signal);
-//		xil_printf("After input limit:  %ld (threshold: %d)\r\n", limited_signal, INPUT_LIMIT_THRESHOLD);
+		xil_printf("After input limit:  %ld (threshold: %d)\r\n", limited_signal, INPUT_LIMIT_THRESHOLD);
 //		xil_printf("After delay:        %ld\r\n", mixed_signal);
-//		xil_printf("After output limit: %ld (threshold: %d)\r\n", output_signal, OUTPUT_LIMIT_THRESHOLD);
-//		xil_printf("PWM sample:         %ld\r\n", pwm_sample);
-//		xil_printf("Delay: enabled=%d, samples=%lu\r\n", delay_enabled, delay_samples);
-//		xil_printf("===============================\r\n\r\n");
-//		count = 0;
-//	}
+		xil_printf("After output limit: %ld (threshold: %d)\r\n", output_signal, OUTPUT_LIMIT_THRESHOLD);
+		xil_printf("PWM sample:         %ld\r\n", pwm_sample);
+		xil_printf("Delay: enabled=%d, samples=%lu\r\n", delay_enabled, delay_samples);
+		xil_printf("===============================\r\n\r\n");
+		sys_tick_counter = 0;
+	}
 
 	// set the duty cycle of the PWM signal
     XTmrCtr_SetResetValue(&pwm_tmr, 1, pwm_sample);
@@ -269,6 +255,7 @@ void sampling_ISR() {
 
 void init_btn_gpio() {
 	XGpio_Initialize(&pushBtn, XPAR_AXI_GPIO_BTN_DEVICE_ID);
+	XGpio_SetDataDirection(&pushBtn, 1, 0xFFFFFFFF);
 	XGpio_InterruptEnable(&pushBtn, XGPIO_IR_CH1_MASK);
 	XGpio_InterruptGlobalEnable(&pushBtn);
 	XIntc_Connect(&sys_intc, XPAR_MICROBLAZE_0_AXI_INTC_AXI_GPIO_BTN_IP2INTC_IRPT_INTR, (XInterruptHandler) pushBtn_ISR, &pushBtn);
@@ -288,7 +275,6 @@ void pushBtn_ISR(void *CallbackRef) {
 	XGpio *GpioPtr = (XGpio *)CallbackRef;
 	unsigned int btn_val = XGpio_DiscreteRead(GpioPtr, 1);
 
-//	u32 btn_curr_press_time = XTmrCtr_GetValue(&sampling_tmr, XPAR_AXI_TIMER_0_DEVICE_ID);
 	u32 btn_curr_press_time = sys_tick_counter;
 	u32 time_between_press = btn_curr_press_time - btn_prev_press_time;
 
@@ -302,19 +288,6 @@ void pushBtn_ISR(void *CallbackRef) {
 		btn_prev_press_time = btn_curr_press_time;
 		xil_printf("btn right press\r\n");
 	}
-
-//	else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_TOP)) {
-//		btn_prev_press_time = btn_curr_press_time;
-////		xil_printf("btn top press\r\n");
-//		delay_enabled = !delay_enabled;
-//		if (delay_enabled) {
-//			read_head = (write_head - delay_samples + BUFFER_SIZE) % BUFFER_SIZE;
-//			xil_printf("Delay ON: %lu samples (~%lu ms)\r\n", delay_samples, (delay_samples * 1000) / 48000);
-//		} else {
-//			xil_printf("Delay OFF\r\n");
-//		}
-//	}
-
     else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_TOP)) {
         btn_prev_press_time = btn_curr_press_time;
         // Button 0: Toggle delay effect on/off
@@ -323,18 +296,9 @@ void pushBtn_ISR(void *CallbackRef) {
             // Recalculate read_head when enabling delay
             // Ensure read_head is valid (within buffer bounds)
             read_head = (write_head - delay_samples + BUFFER_SIZE) % BUFFER_SIZE;
-
-//            // Debug: Print buffer state
             xil_printf("Delay ON: %lu samples (~%lu ms)\r\n", delay_samples, (delay_samples * 1000) / 48000);
-//            xil_printf("  write_head: %lu, samples_written: %lu\r\n", write_head, samples_written);
-//            if (samples_written > delay_samples) {
-//                u32 calc_read = (write_head - delay_samples + BUFFER_SIZE) % BUFFER_SIZE;
-//                xil_printf("  calculated read_head: %lu, delayed_signal: %ld\r\n",
-//                           calc_read, (int32_t)circular_buffer[calc_read]);
-//            } else {
-//                xil_printf("  Buffer filling... need %lu more samples\r\n", delay_samples - samples_written);
-//            }
-        } else {
+        }
+        else {
             xil_printf("Delay OFF\r\n");
         }
     }
@@ -386,7 +350,8 @@ void enc_ISR(void *CallbackRef) {
 			read_head = (write_head - delay_samples + BUFFER_SIZE) % BUFFER_SIZE;
 			xil_printf("Delay: %lu samples (~%lu ms)\r\n", delay_samples, (delay_samples * 1000) / 48000);
 		}
-	} else {
+	}
+	else {
 		if (s_saw_cw) {
 			s_saw_cw  = 0;
 			xil_printf("CW turn\r\n");
@@ -498,12 +463,12 @@ int init_pwm_timer() {
 	// We match the sampling frequency: 2267 ticks
 	// Side Note: we can decrease 2267 to a smaller number to increase the amount of 'pwm cycles' in one sampling cycle; this leads to a smoother signal because of analog filtering
 	// think of channel 0 of the pwm_tmr as modifying the "Auto Reload Register (ARR)" of STM32 timers
-	XTmrCtr_SetResetValue(&pwm_tmr, 0, RESET_VALUE);
+	XTmrCtr_SetResetValue(&pwm_tmr, 0, RESET_VALUE); //
 
 	// Set the Duty Cycle (High Time) in the second register (TLR1)
 	// Start with 50% duty cycle (silence)
 	// think of channel 1 of the pwm_tmr as modifying the "Capture Compare Register (CCR)" of STM32 timers
-	XTmrCtr_SetResetValue(&pwm_tmr, 1, RESET_VALUE / 2);
+	XTmrCtr_SetResetValue(&pwm_tmr, 1, RESET_VALUE / 2); //
 
 	// This function sets the specific bits in the Control Status Register to turn on PWM
 	XTmrCtr_PwmEnable(&pwm_tmr);

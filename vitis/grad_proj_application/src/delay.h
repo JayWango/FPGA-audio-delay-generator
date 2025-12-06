@@ -3,13 +3,12 @@
 
 // this file contains all the definitions for the circular buffer
 
-#define BUFFER_SIZE 16000 // this buffer size is statically set by the programmers; size is not dynamic
+#define BUFFER_SIZE 40000 // this buffer size is statically set by the programmers; size is not dynamic
 #define READ_START  2000  // starting index for the read head of the circular buffer
 
 #define DELAY_SAMPLES_MIN 500
-#define DELAY_SAMPLES_MAX 14000
+#define DELAY_SAMPLES_MAX 38000
 #define DELAY_SAMPLES_DEFAULT 8000
-
 #define DELAY_ADJUST_STEP 500
 
 #define WET_MIX 192
