@@ -47,21 +47,9 @@ void BSP_init() {
 void sampling_ISR() {
 	sys_tick_counter++;
 
-	// jason note: i realized that it doesn't make sense to have a for loop within the ISR; if we are doing this interrupt at the same rate as the stream grabber, we would never read the next index of the grabber
 	// refer to stream_grabber.c from lab3a for why this is necessary
 	// BASEADDR + 4 is the offset of where you "select" which index to read from the stream grabber
 	// BASEADDR + 8 is the offset of where you actually read the raw data of the mic
-//	int32_t samples[NUM_INPUT_SAMPLES];
-//	for (int i = 0; i < NUM_INPUT_SAMPLES; i++) {
-//		Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, i);
-//		samples[i] = (int32_t)Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
-//	}
-//
-//	int32_t sum = 0;
-//	for (int i = 0; i < NUM_INPUT_SAMPLES; i++) {
-//		sum += samples[i];
-//	}
-//	int32_t curr_sample = sum / NUM_INPUT_SAMPLES;
 
 	Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, 0);
 	int32_t curr_sample = (int32_t) Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
@@ -72,95 +60,35 @@ void sampling_ISR() {
         first_run = 0;
     }
 
-	// self note: try to comment out this exponential moving average and see how it affects our audio signal
-    // Exponential Moving Average
+    // Exponential Moving Average; not sure if this actually does much to help
 	// this line expands to: dc_bias = dc_bias + ((curr_sample - dc_bias) >> 10);
     //dc_bias += (curr_sample - dc_bias) >> 10;
 
     // remove the DC offset from the current sample
     int32_t audio_signal = curr_sample - dc_bias;
 
-    // HIGH-PASS FILTER (removes low-frequency rumble)
-    // int32_t hp_input = audio_signal;
-//    hp_filter_state = hp_filter_state + ((audio_signal - hp_filter_state) * HP_FILTER_COEFF >> 8);
-//    int32_t filtered_signal = audio_signal - hp_filter_state;
-//
-//    int32_t hpf_signal = filtered_signal >> 15;
+	// TRY THIS: apply a 'noise gate' to kill the feedback before it grows; adjust the '150'
+	// if (abs(audio_signal) < 150) {
+	// 	audio_signal = 0
+	// }
 
-    // LPF filter to remove squeals?
-    int32_t lp_input = audio_signal;
-    lp_filter_state = lp_filter_state + ((lp_input - lp_filter_state) * LP_FILTER_COEFF >> 8);
+    // HIGH-PASS FILTER (removes low-frequency rumble)
+    hp_filter_state = hp_filter_state + (((audio_signal - hp_filter_state) * HP_FILTER_COEFF) >> 8);
+    int32_t hpf_signal = audio_signal - hp_filter_state;
+
+    // LOW-PASS FILTER (remove high-frequency squeals)
+    lp_filter_state = lp_filter_state + (((hpf_signal - lp_filter_state) * LP_FILTER_COEFF) >> 8);
 
     // now that we preserve the sign, we can shift safely
 	// scale the signal down to a nice number ideally between -1024 and 1024
     //int32_t scaled_signal = audio_signal >> 16; // change num back to 15 if it sounds bad
     int32_t scaled_signal = lp_filter_state >> 16;
 
-    //int32_t scaled_signal_before_agc = scaled_signal;
-
-    // AUTOMATIC GAIN CONTROL (prevents feedback)
-    // Detect input level and reduce gain when input is loud
-    int32_t input_level = (scaled_signal < 0) ? -scaled_signal : scaled_signal;
-
-    // Calculate gain reduction when input exceeds threshold
-    if (input_level > AGC_THRESHOLD) {
-        // Reduce gain proportionally to input level
-        // Gain reduction = (input_level - threshold) / reduction_rate
-        int32_t excess = input_level - AGC_THRESHOLD;
-        int32_t gain_reduction = excess >> AGC_REDUCTION_RATE;  // Divide by 16
-        agc_gain = 256 - gain_reduction;
-        if (agc_gain < AGC_MIN_GAIN) {
-            agc_gain = AGC_MIN_GAIN;  // Never go below minimum gain
-        }
-    } else {
-        // Gradually restore gain when input is below threshold
-        // Slowly increase gain back to full (256)
-        if (agc_gain < 256) {
-            agc_gain += 1;  // Slow recovery
-            if (agc_gain > 256) agc_gain = 256;
-        }
-    }
-
-    // Apply AGC gain to signal
-    int32_t agc_signal = (scaled_signal * agc_gain) >> 8;
-
-    // INPUT LIMITER (prevents clipping in processing chain)
-    // Soft limiter: compress signal above threshold
-    int32_t limited_signal = agc_signal;
-    if (limited_signal > INPUT_LIMIT_THRESHOLD) {
-        // Soft compression: threshold + (excess / 4)
-        limited_signal = INPUT_LIMIT_THRESHOLD + ((limited_signal - INPUT_LIMIT_THRESHOLD) >> 2);
-    } else if (limited_signal < -INPUT_LIMIT_THRESHOLD) {
-        limited_signal = -INPUT_LIMIT_THRESHOLD + ((limited_signal + INPUT_LIMIT_THRESHOLD) >> 2);
-    }
-
-    // Use limited_signal for further processing
-    scaled_signal = limited_signal;
-
-    // ************************************************************************************************
-
     circular_buffer[write_head] = scaled_signal;
     samples_written++;
 
-//    int32_t delayed_signal = circular_buffer[read_head];
-//
-//    int32_t dry_mixed = (scaled_signal * DRY_MIX) >> 8;
-//    int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
-//    int32_t mixed_signal = dry_mixed + wet_mixed;
-//
-//    write_head = (write_head + 1) % BUFFER_SIZE;
-//    read_head = (read_head + 1) % BUFFER_SIZE;
-
     int32_t mixed_signal;
     if (delay_enabled) {
-//    	int32_t delayed_signal = circular_buffer[read_head];
-//
-//		int32_t dry_mixed = (scaled_signal * DRY_MIX) >> 8;
-//		int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
-//		int32_t mixed_signal = dry_mixed + wet_mixed;
-//
-//		write_head = (write_head + 1) % BUFFER_SIZE;
-//		read_head = (read_head + 1) % BUFFER_SIZE;
         // Only process delay if buffer has enough samples written
         // Need at least delay_samples worth of data in buffer
         if (samples_written > delay_samples) {
@@ -172,15 +100,6 @@ void sampling_ISR() {
             // Read delayed sample from circular buffer
             int32_t delayed_signal = (int32_t)circular_buffer[current_read_head];
 
-            // DEBUG: Print values occasionally to debug (remove in production)
-//            static u32 debug_count = 0;
-//            if (debug_count++ % 48000 == 0) {  // Once per second
-//                xil_printf("DEBUG: write_head=%lu, read_head=%lu, calc_read_head=%lu, delay_samples=%lu\r\n",
-//                           write_head, read_head, current_read_head, delay_samples);
-//                xil_printf("DEBUG: scaled_signal=%ld, delayed_signal=%ld, samples_written=%lu\r\n",
-//                           scaled_signal, delayed_signal, samples_written);
-//            }
-
             // Mix dry (current) and wet (delayed) signals
             int32_t dry_mixed = (scaled_signal * DRY_MIX) >> 8;
             int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
@@ -188,15 +107,16 @@ void sampling_ISR() {
 
             // Update read_head for tracking
             read_head = current_read_head;
-        } else {
+        } 
+		else {
             // Buffer not ready yet - output dry signal until buffer fills
             mixed_signal = scaled_signal;
         }
 
         // Always update write_head
         write_head = (write_head + 1) % BUFFER_SIZE;
-
-    } else {
+    } 
+	else {
     	mixed_signal = scaled_signal;
 
     	write_head = (write_head + 1) % BUFFER_SIZE;
@@ -211,21 +131,19 @@ void sampling_ISR() {
     	output_signal = -OUTPUT_LIMIT_THRESHOLD;
     }
 
+	// re-center for PWM (unsigned output between 0 to 2048)
+    // we add the mid-point of the PWM ticks (2048/2 = 1024) to turn the signed AC wave into a positive DC wave
     int32_t pwm_sample = output_signal + (RESET_VALUE / 2);
-
-    // re-center for PWM (unsigned output between 0 to 2267)
-    // we add the mid-point of the PWM ticks (2267/2 = 1133) to turn the signed AC wave into a positive DC wave
-//    int32_t pwm_sample = mixed_signal + (RESET_VALUE / 2);
 
     // clip the audio for safety 
     if (pwm_sample < 0) pwm_sample = 0;
     if (pwm_sample > RESET_VALUE) pwm_sample = RESET_VALUE;
 
 	if (sys_tick_counter >= 24000) {  // Print once per second at 48kHz
-//		xil_printf("=== Signal Processing Debug ===\r\n");
-//		xil_printf("Raw sample:        %ld\r\n", curr_sample);
-//		xil_printf("DC bias:            %ld\r\n", dc_bias);
-//		xil_printf("After DC removal:   %ld\r\n", audio_signal);
+		xil_printf("=== Signal Processing Debug ===\r\n");
+		xil_printf("Raw sample:        %ld\r\n", curr_sample);
+		xil_printf("DC bias:            %ld\r\n", dc_bias);
+		xil_printf("After DC removal:   %ld\r\n", audio_signal);
 //		xil_printf("HP filter state:    %ld\r\n", hp_filter_state);
 //		xil_printf("After HP filter:    %ld\r\n", filtered_signal);
 //		xil_printf("After scaling w/HPF: %ld\r\n", hpf_signal);
@@ -362,17 +280,6 @@ void enc_ISR(void *CallbackRef) {
 			xil_printf("CCW turn\r\n");
 		}
 	}
-
-//	/* Raise flags on completion */
-//	if (s_saw_cw) {
-//		s_saw_cw  = 0;
-//		xil_printf("CW turn\r\n");
-//	}
-//
-//	if (s_saw_ccw) {
-//		s_saw_ccw = 0;
-//		xil_printf("CCW turn\r\n");
-//	}
 
 	if (!enc_prev_press && (curr_press & ENC_BTN)) {
 		xil_printf("enc btn press\r\n");
