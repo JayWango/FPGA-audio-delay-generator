@@ -67,9 +67,9 @@ void sampling_ISR() {
 	// this line expands to: dc_bias = dc_bias + ((curr_sample - dc_bias) >> 10);
     dc_bias_drift += (curr_sample - dc_bias_drift) >> 10;
 
-//    if ((dc_bias_drift > curr_sample + 100000) || (dc_bias_drift < curr_sample - 100000)) {
-//    	dc_bias_drift = dc_bias_static;
-//    }
+    if ((dc_bias_drift > curr_sample + 100000) || (dc_bias_drift < curr_sample - 100000)) {
+    	dc_bias_drift = dc_bias_static;
+    }
 
     // remove the DC offset from the current sample
     int32_t audio_signal = curr_sample - dc_bias_drift;
@@ -85,21 +85,22 @@ void sampling_ISR() {
 
     // now that we preserve the sign, we can shift safely
 	// scale the signal down to a nice number ideally between -1024 and 1024
-    int32_t scaled_signal = audio_signal >> 16; // change num back to 15 if it sounds bad
-    //int32_t scaled_signal = lp_filter_state >> 16;
+//    int32_t scaled_signal = audio_signal >> 16; // change num back to 15 if it sounds bad
+    int32_t scaled_signal = lp_filter_state >> 16;
 
     //int32_t scaled_signal_before_agc = scaled_signal;
 
     // AUTOMATIC GAIN CONTROL (prevents feedback)
     // Detect input level and reduce gain when input is loud
     int32_t input_level = (scaled_signal < 0) ? -scaled_signal : scaled_signal;
-
     // Calculate gain reduction when input exceeds threshold
     if (input_level > AGC_THRESHOLD) {
         // Reduce gain proportionally to input level
         // Gain reduction = (input_level - threshold) / reduction_rate
         int32_t excess = input_level - AGC_THRESHOLD;
+//        xil_printf("Excess: %ld", excess);
         int32_t gain_reduction = excess >> AGC_REDUCTION_RATE;  // Divide by 16
+//        xil_printf("Gain Reduction: %ld", gain_reduction);
         agc_gain = 256 - gain_reduction;
         if (agc_gain < AGC_MIN_GAIN) {
             agc_gain = AGC_MIN_GAIN;  // Never go below minimum gain
@@ -114,11 +115,14 @@ void sampling_ISR() {
     }
 
     // Apply AGC gain to signal
-    int32_t agc_signal = (scaled_signal * agc_gain) >> 8;
+
+    // agc
+//    int32_t gain_signal = (scaled_signal * agc_gain) >> 8;
 
     // INPUT LIMITER (prevents clipping in processing chain)
     // Soft limiter: compress signal above threshold
-    int32_t limited_signal = agc_signal;
+    //int32_t limited_signal = gain_signal;
+    int32_t limited_signal = scaled_signal;
     if (limited_signal > INPUT_LIMIT_THRESHOLD) {
         // Soft compression: threshold + (excess / 4)
         limited_signal = INPUT_LIMIT_THRESHOLD + ((limited_signal - INPUT_LIMIT_THRESHOLD) >> 2);
@@ -213,19 +217,18 @@ void sampling_ISR() {
     if (pwm_sample < 0) pwm_sample = 0;
     if (pwm_sample > RESET_VALUE) pwm_sample = RESET_VALUE;
 
-	if (sys_tick_counter >= 72000) {  // Print once per second at 48kHz
-//		xil_printf("=== Signal Processing Debug ===\r\n");
-		xil_printf("Raw sample:        %ld\r\n", curr_sample);
-		xil_printf("DC bias(static):            %ld\r\n", dc_bias_static);
-		xil_printf("DC bias(drift):            %ld\r\n", dc_bias_drift);
-		xil_printf("Input level:        %ld (threshold: %d)\r\n", input_level, AGC_THRESHOLD);
-		xil_printf("After input limit:  %ld (threshold: %d)\r\n", limited_signal, INPUT_LIMIT_THRESHOLD);
-		xil_printf("After output limit: %ld (threshold: %d)\r\n", output_signal, OUTPUT_LIMIT_THRESHOLD);
-		xil_printf("PWM sample:         %ld\r\n", pwm_sample);
-		xil_printf("Delay: enabled=%d, samples=%lu\r\n", delay_enabled, delay_samples);
-		xil_printf("===============================\r\n\r\n");
-		sys_tick_counter = 0;
-	}
+//	if (sys_tick_counter >= 48000) {  // Print once per second at 48kHz
+//		xil_printf("Raw sample:        %ld\r\n", curr_sample);
+//		xil_printf("DC bias(static):            %ld\r\n", dc_bias_static);
+//		xil_printf("DC bias(drift):            %ld\r\n", dc_bias_drift);
+//		xil_printf("Input level:        %ld (threshold: %d)\r\n", input_level, AGC_THRESHOLD);
+//		xil_printf("After input limit:  %ld (threshold: %d)\r\n", limited_signal, INPUT_LIMIT_THRESHOLD);
+//		xil_printf("After output limit: %ld (threshold: %d)\r\n", output_signal, OUTPUT_LIMIT_THRESHOLD);
+//		xil_printf("PWM sample:         %ld\r\n", pwm_sample);
+//		xil_printf("Delay: enabled=%d, samples=%lu\r\n", delay_enabled, delay_samples);
+//		xil_printf("===============================\r\n\r\n");
+//		sys_tick_counter = 0;
+//	}
 
 	// set the duty cycle of the PWM signal
     XTmrCtr_SetResetValue(&pwm_tmr, 1, pwm_sample);

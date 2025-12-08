@@ -14,14 +14,14 @@
 #define NUM_INPUT_SAMPLES 5
 
 #define HP_FILTER_COEFF  1 // range from 0-256, higher = less filtering, lower = more filtering
-#define LP_FILTER_COEFF 75
+#define LP_FILTER_COEFF 50 // at a coeff of 1, the LPF is very aggressive; you can blow into mic and hear sound, but can't hear higher pitches
 
 #define AGC_THRESHOLD 350 // lower = more aggressive gain reduction
-#define AGC_MIN_GAIN 64 // prevents complete silence
+#define AGC_MIN_GAIN 32 // prevents complete silence
 #define AGC_REDUCTION_RATE 2 // how fast gain reduces, higher = slower reduction, lower = faster reduction
 
-#define INPUT_LIMIT_THRESHOLD 100000
-#define OUTPUT_LIMIT_THRESHOLD 100000
+#define INPUT_LIMIT_THRESHOLD 400
+#define OUTPUT_LIMIT_THRESHOLD 400
 
 // defines for 5 pushbuttons
 #define BTN_MIDDLE  BTN4_MASK
