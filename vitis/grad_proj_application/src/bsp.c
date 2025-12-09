@@ -1,8 +1,8 @@
 #include "bsp.h"
 #include "delay.h"
 #include "encoder.h"
-#include "effects.h"
 #include "xil_printf.h"
+#include "tremolo.h"
 
 XIntc sys_intc;
 XGpio enc;
@@ -10,32 +10,30 @@ XGpio pushBtn;
 XTmrCtr sampling_tmr; // axi_timer_0
 XTmrCtr pwm_tmr; // axi_timer_1
 
+// variables for delay
 volatile u32 circular_buffer[BUFFER_SIZE] = {0};
 volatile u32 read_head = READ_START;
 volatile u32 write_head = 0;
-
 volatile u8 delay_enabled = 0;
 volatile u32 delay_samples = DELAY_SAMPLES_DEFAULT;
 volatile u32 samples_written = 0;
 
 // variables used in sampling_ISR() for printing statistics and collecting the DC offset of the raw data
+volatile u32 sys_tick_counter = 0;
+volatile int32_t curr_sample = 0;
+volatile int32_t tiny_buffer[SAMPLES] = {0,0,0,0,0};
+static int tiny_buffer_index = 0;
 static int32_t dc_bias_drift = 0;
 static int32_t dc_bias_static = 0;
 static int first_run = 1; // just a simple flag
-
 static int32_t hp_filter_state = 0;
 static int32_t lp_filter_state = 0;
 static int32_t lp_filter_state_2 = 0;
 static int32_t agc_gain = 256;
 
+// encoder variables
 volatile u32 btn_prev_press_time = 0;
 static unsigned int enc_prev_press = 0;
-
-volatile u32 sys_tick_counter = 0;
-volatile int32_t curr_sample = 0;
-
-volatile int32_t tiny_buffer[SAMPLES] = {0,0,0,0,0};
-static int tiny_buffer_index = 0;
 
 void BSP_init() {
 	// interrupt controller
@@ -46,6 +44,8 @@ void BSP_init() {
 	init_enc_gpio();
 	init_pwm_timer();
 	init_sampling_timer();
+
+	init_tremolo();
 }
 
 // samples are grabbed from the streamer at 48828.125 Hz, so need to modify this sampling ISR to grab data at the same frequency
@@ -54,13 +54,9 @@ void BSP_init() {
 void sampling_ISR() {
 	sys_tick_counter++;
 
-	// jason note: i realized that it doesn't make sense to have a for loop within the ISR; if we are doing this interrupt at the same rate as the stream grabber, we would never read the next index of the grabber
-	// refer to stream_grabber.c from lab3a for why this is necessary
 	// BASEADDR + 4 is the offset of where you "select" which index to read from the stream grabber
 	// BASEADDR + 8 is the offset of where you actually read the raw data of the mic
-
 	Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, 0);
-//	curr_sample = (int32_t) Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
 	int32_t new_sample = (int32_t) Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
 
 	tiny_buffer[tiny_buffer_index] = new_sample;
@@ -147,8 +143,9 @@ void sampling_ISR() {
 
     circular_buffer[write_head] = limited_signal;
     samples_written++;
+    write_head = (write_head + 1) % BUFFER_SIZE;
 
-    int32_t mixed_signal;
+    int32_t mixed_signal = limited_signal;
     if (delay_enabled) {
         // Only process delay if buffer has enough samples written
         // Need at least delay_samples worth of data in buffer
@@ -162,41 +159,21 @@ void sampling_ISR() {
             int32_t delayed_signal = (int32_t)circular_buffer[current_read_head];
 
             // Mix dry (current) and wet (delayed) signals
-            int32_t dry_mixed = (scaled_signal * DRY_MIX) >> 8;
+            int32_t dry_mixed = (limited_signal * DRY_MIX) >> 8;
             int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
             mixed_signal = dry_mixed + wet_mixed;
 
             // Update read_head for tracking
             read_head = current_read_head;
         }
-        else {
-            // Buffer not ready yet - output dry signal until buffer fills
-            mixed_signal = scaled_signal;
-        }
-
-        // Always update write_head
-        write_head = (write_head + 1) % BUFFER_SIZE;
-
-    }
-    else {
-    	mixed_signal = scaled_signal;
-
-    	write_head = (write_head + 1) % BUFFER_SIZE;
     }
 
-    // EFFECTS
-
-    int32_t effect_signal = mixed_signal;
-
-    //effect_signal = process_chorus(effect_signal);
-    effect_signal = process_tremolo(effect_signal);
-    //effect_signal = process_bass_boost(effect_signal);
-    //effect_signal = process_reverb(effect_signal);
-
-    effect_signal = (effect_signal * 192) >> 8;
+    if (tremolo_enabled) {
+    	mixed_signal = process_tremolo(mixed_signal);
+    }
 
     // OUTPUT LIMITER
-    int32_t output_signal = effect_signal;
+    int32_t output_signal = mixed_signal;
     if (output_signal > OUTPUT_LIMIT_THRESHOLD) {
     	output_signal = OUTPUT_LIMIT_THRESHOLD;
     }
@@ -204,11 +181,9 @@ void sampling_ISR() {
     	output_signal = -OUTPUT_LIMIT_THRESHOLD;
     }
 
+    // re-center for PWM (unsigned output between 0 to 2048)
+    // we add the mid-point of the PWM ticks (2048/2 = 1024) to turn the signed AC wave into a positive DC wave
     int32_t pwm_sample = output_signal + (RESET_VALUE / 2);
-
-    // re-center for PWM (unsigned output between 0 to 2267)
-    // we add the mid-point of the PWM ticks (2267/2 = 1133) to turn the signed AC wave into a positive DC wave
-//    int32_t pwm_sample = mixed_signal + (RESET_VALUE / 2);
 
     // clip the audio for safety 
     if (pwm_sample < 0) pwm_sample = 0;
@@ -250,19 +225,9 @@ void pushBtn_ISR(void *CallbackRef) {
 	u32 btn_curr_press_time = sys_tick_counter;
 	u32 time_between_press = btn_curr_press_time - btn_prev_press_time;
 
-	// BTN_MIDDLE, RIGHT, etc. are bit masks defined in bsp.h
-	if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_MIDDLE)) {
-		btn_prev_press_time = btn_curr_press_time;
-		xil_printf("btn middle press\r\n");
-	}
-
-	else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_RIGHT)) {
-		btn_prev_press_time = btn_curr_press_time;
-		xil_printf("btn right press\r\n");
-	}
-    else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_TOP)) {
+	// BTN_TOP, BOTTOM, etc. are bit masks defined in bsp.h
+    if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_TOP)) {
         btn_prev_press_time = btn_curr_press_time;
-        // Button 0: Toggle delay effect on/off
         delay_enabled = !delay_enabled;
         if (delay_enabled) {
             // Recalculate read_head when enabling delay
@@ -274,16 +239,9 @@ void pushBtn_ISR(void *CallbackRef) {
             xil_printf("Delay OFF\r\n");
         }
     }
-
-	else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_LEFT)) {
-		btn_prev_press_time = btn_curr_press_time;
-		xil_printf("btn left press\r\n");
-	}
-
 	else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_BOTTOM)) {
 		btn_prev_press_time = btn_curr_press_time;
 		tremolo_enabled = !tremolo_enabled;
-//		xil_printf("btn bottom press\r\n");
 		if (tremolo_enabled) {
 			update_tremolo_phase_inc();
 			xil_printf("Tremolo ON: rate=%lu, depth=%lu\r\n", tremolo_rate, tremolo_depth);
