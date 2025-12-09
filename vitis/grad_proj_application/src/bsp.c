@@ -1,6 +1,7 @@
 #include "bsp.h"
 #include "delay.h"
 #include "encoder.h"
+#include "effects.h"
 #include "xil_printf.h"
 
 XIntc sys_intc;
@@ -24,12 +25,17 @@ static int first_run = 1; // just a simple flag
 
 static int32_t hp_filter_state = 0;
 static int32_t lp_filter_state = 0;
+static int32_t lp_filter_state_2 = 0;
 static int32_t agc_gain = 256;
 
 volatile u32 btn_prev_press_time = 0;
 static unsigned int enc_prev_press = 0;
 
 volatile u32 sys_tick_counter = 0;
+volatile int32_t curr_sample = 0;
+
+volatile int32_t tiny_buffer[SAMPLES] = {0,0,0,0,0};
+static int tiny_buffer_index = 0;
 
 void BSP_init() {
 	// interrupt controller
@@ -54,7 +60,19 @@ void sampling_ISR() {
 	// BASEADDR + 8 is the offset of where you actually read the raw data of the mic
 
 	Xil_Out32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 4, 0);
-	int32_t curr_sample = (int32_t) Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
+//	curr_sample = (int32_t) Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
+	int32_t new_sample = (int32_t) Xil_In32(XPAR_MIC_BLOCK_STREAM_GRABBER_0_BASEADDR + 8);
+
+	tiny_buffer[tiny_buffer_index] = new_sample;
+	tiny_buffer_index = (tiny_buffer_index + 1) % 5;
+
+	// calculate Average immediately (Don't wait!)
+	int32_t sum = 0;
+	for (int i = 0; i < 5; i++) {
+		sum += tiny_buffer[i];
+	}
+	// Update global variable with the SMOOTHED value
+	curr_sample = sum / 5;
 
     // set first sample from mic as the dc_bias
     if (first_run) {
@@ -62,11 +80,8 @@ void sampling_ISR() {
         first_run = 0;
     }
 
-	// self note: try to comment out this exponential moving average and see how it affects our audio signal
-    // Exponential Moving Average
-	// this line expands to: dc_bias = dc_bias + ((curr_sample - dc_bias) >> 10);
+    // moving average of the dc_bias to track it
     dc_bias_drift += (curr_sample - dc_bias_drift) >> 10;
-
     if ((dc_bias_drift > curr_sample + 100000) || (dc_bias_drift < curr_sample - 100000)) {
     	dc_bias_drift = dc_bias_static;
     }
@@ -78,15 +93,14 @@ void sampling_ISR() {
     hp_filter_state = hp_filter_state + ((audio_signal - hp_filter_state) * HP_FILTER_COEFF >> 8);
     int32_t filtered_signal = audio_signal - hp_filter_state;
 
-    // int32_t hpf_signal = filtered_signal >> 15;
-
-    // LPF filter to remove squeals?
+    // two cascaded LPF filter to remove high frequency squeals
     lp_filter_state = lp_filter_state + ((filtered_signal - lp_filter_state) * LP_FILTER_COEFF >> 8);
+    lp_filter_state_2 = lp_filter_state_2 + ((lp_filter_state - lp_filter_state_2) * LP_FILTER_COEFF >> 8);
 
     // now that we preserve the sign, we can shift safely
 	// scale the signal down to a nice number ideally between -1024 and 1024
 //    int32_t scaled_signal = audio_signal >> 16; // change num back to 15 if it sounds bad
-    int32_t scaled_signal = lp_filter_state >> 16;
+    int32_t scaled_signal = lp_filter_state_2 >> 17;
 
     //int32_t scaled_signal_before_agc = scaled_signal;
 
@@ -115,9 +129,7 @@ void sampling_ISR() {
     }
 
     // Apply AGC gain to signal
-
-    // agc
-//    int32_t gain_signal = (scaled_signal * agc_gain) >> 8;
+    // int32_t gain_signal = (scaled_signal * agc_gain) >> 8;
 
     // INPUT LIMITER (prevents clipping in processing chain)
     // Soft limiter: compress signal above threshold
@@ -126,37 +138,18 @@ void sampling_ISR() {
     if (limited_signal > INPUT_LIMIT_THRESHOLD) {
         // Soft compression: threshold + (excess / 4)
         limited_signal = INPUT_LIMIT_THRESHOLD + ((limited_signal - INPUT_LIMIT_THRESHOLD) >> 2);
-    } else if (limited_signal < -INPUT_LIMIT_THRESHOLD) {
+    }
+    else if (limited_signal < -INPUT_LIMIT_THRESHOLD) {
         limited_signal = -INPUT_LIMIT_THRESHOLD + ((limited_signal + INPUT_LIMIT_THRESHOLD) >> 2);
     }
 
-    // Use limited_signal for further processing
-    scaled_signal = limited_signal;
-
     // ************************************************************************************************
 
-    circular_buffer[write_head] = scaled_signal;
+    circular_buffer[write_head] = limited_signal;
     samples_written++;
-
-//    int32_t delayed_signal = circular_buffer[read_head];
-//
-//    int32_t dry_mixed = (scaled_signal * DRY_MIX) >> 8;
-//    int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
-//    int32_t mixed_signal = dry_mixed + wet_mixed;
-//
-//    write_head = (write_head + 1) % BUFFER_SIZE;
-//    read_head = (read_head + 1) % BUFFER_SIZE;
 
     int32_t mixed_signal;
     if (delay_enabled) {
-//    	int32_t delayed_signal = circular_buffer[read_head];
-//
-//		int32_t dry_mixed = (scaled_signal * DRY_MIX) >> 8;
-//		int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
-//		int32_t mixed_signal = dry_mixed + wet_mixed;
-//
-//		write_head = (write_head + 1) % BUFFER_SIZE;
-//		read_head = (read_head + 1) % BUFFER_SIZE;
         // Only process delay if buffer has enough samples written
         // Need at least delay_samples worth of data in buffer
         if (samples_written > delay_samples) {
@@ -168,15 +161,6 @@ void sampling_ISR() {
             // Read delayed sample from circular buffer
             int32_t delayed_signal = (int32_t)circular_buffer[current_read_head];
 
-            // DEBUG: Print values occasionally to debug (remove in production)
-//            static u32 debug_count = 0;
-//            if (debug_count++ % 48000 == 0) {  // Once per second
-//                xil_printf("DEBUG: write_head=%lu, read_head=%lu, calc_read_head=%lu, delay_samples=%lu\r\n",
-//                           write_head, read_head, current_read_head, delay_samples);
-//                xil_printf("DEBUG: scaled_signal=%ld, delayed_signal=%ld, samples_written=%lu\r\n",
-//                           scaled_signal, delayed_signal, samples_written);
-//            }
-
             // Mix dry (current) and wet (delayed) signals
             int32_t dry_mixed = (scaled_signal * DRY_MIX) >> 8;
             int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
@@ -184,7 +168,8 @@ void sampling_ISR() {
 
             // Update read_head for tracking
             read_head = current_read_head;
-        } else {
+        }
+        else {
             // Buffer not ready yet - output dry signal until buffer fills
             mixed_signal = scaled_signal;
         }
@@ -192,14 +177,26 @@ void sampling_ISR() {
         // Always update write_head
         write_head = (write_head + 1) % BUFFER_SIZE;
 
-    } else {
+    }
+    else {
     	mixed_signal = scaled_signal;
 
     	write_head = (write_head + 1) % BUFFER_SIZE;
     }
 
+    // EFFECTS
+
+    int32_t effect_signal = mixed_signal;
+
+    //effect_signal = process_chorus(effect_signal);
+    effect_signal = process_tremolo(effect_signal);
+    //effect_signal = process_bass_boost(effect_signal);
+    //effect_signal = process_reverb(effect_signal);
+
+    effect_signal = (effect_signal * 192) >> 8;
+
     // OUTPUT LIMITER
-    int32_t output_signal = mixed_signal;
+    int32_t output_signal = effect_signal;
     if (output_signal > OUTPUT_LIMIT_THRESHOLD) {
     	output_signal = OUTPUT_LIMIT_THRESHOLD;
     }
@@ -216,19 +213,6 @@ void sampling_ISR() {
     // clip the audio for safety 
     if (pwm_sample < 0) pwm_sample = 0;
     if (pwm_sample > RESET_VALUE) pwm_sample = RESET_VALUE;
-
-//	if (sys_tick_counter >= 48000) {  // Print once per second at 48kHz
-//		xil_printf("Raw sample:        %ld\r\n", curr_sample);
-//		xil_printf("DC bias(static):            %ld\r\n", dc_bias_static);
-//		xil_printf("DC bias(drift):            %ld\r\n", dc_bias_drift);
-//		xil_printf("Input level:        %ld (threshold: %d)\r\n", input_level, AGC_THRESHOLD);
-//		xil_printf("After input limit:  %ld (threshold: %d)\r\n", limited_signal, INPUT_LIMIT_THRESHOLD);
-//		xil_printf("After output limit: %ld (threshold: %d)\r\n", output_signal, OUTPUT_LIMIT_THRESHOLD);
-//		xil_printf("PWM sample:         %ld\r\n", pwm_sample);
-//		xil_printf("Delay: enabled=%d, samples=%lu\r\n", delay_enabled, delay_samples);
-//		xil_printf("===============================\r\n\r\n");
-//		sys_tick_counter = 0;
-//	}
 
 	// set the duty cycle of the PWM signal
     XTmrCtr_SetResetValue(&pwm_tmr, 1, pwm_sample);
@@ -298,7 +282,15 @@ void pushBtn_ISR(void *CallbackRef) {
 
 	else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_BOTTOM)) {
 		btn_prev_press_time = btn_curr_press_time;
-		xil_printf("btn bottom press\r\n");
+		tremolo_enabled = !tremolo_enabled;
+//		xil_printf("btn bottom press\r\n");
+		if (tremolo_enabled) {
+			update_tremolo_phase_inc();
+			xil_printf("Tremolo ON: rate=%lu, depth=%lu\r\n", tremolo_rate, tremolo_depth);
+		}
+		else {
+			xil_printf("Tremolo OFF\r\n");
+		}
 	}
 
 	XGpio_InterruptClear(GpioPtr, XGPIO_IR_CH1_MASK);
@@ -339,6 +331,30 @@ void enc_ISR(void *CallbackRef) {
 			xil_printf("Delay: %lu samples (~%lu ms)\r\n", delay_samples, (delay_samples * 1000) / 48000);
 		}
 	}
+	else if (tremolo_enabled) {
+		// Button 2: Adjust tremolo rate (modulation speed)
+		// CCW = slower (lower rate), CW = faster (higher rate)
+		if (s_saw_ccw) {
+			s_saw_ccw = 0;
+			if (tremolo_rate > TREMOLO_RATE_MIN) {
+				tremolo_rate -= 1;  // Slower rate (smaller step for finer control)
+			} else {
+				tremolo_rate = TREMOLO_RATE_MIN;
+			}
+			update_tremolo_phase_inc();  // Recalculate phase increment (avoid division in ISR)
+			xil_printf("Tremolo rate: %lu (~%.1f Hz) - Slower\r\n", tremolo_rate, (tremolo_rate * 0.1f));
+		}
+		if (s_saw_cw) {
+			s_saw_cw = 0;
+			if (tremolo_rate < TREMOLO_RATE_MAX) {
+				tremolo_rate += 1;  // Faster rate
+			} else {
+				tremolo_rate = TREMOLO_RATE_MAX;  // Clamp at max
+			}
+			update_tremolo_phase_inc();  // Recalculate phase increment (avoid division in ISR)
+			xil_printf("Tremolo rate: %lu (max=%lu) - Faster\r\n", tremolo_rate, TREMOLO_RATE_MAX);
+		}
+	}
 	else {
 		if (s_saw_cw) {
 			s_saw_cw  = 0;
@@ -350,17 +366,6 @@ void enc_ISR(void *CallbackRef) {
 			xil_printf("CCW turn\r\n");
 		}
 	}
-
-//	/* Raise flags on completion */
-//	if (s_saw_cw) {
-//		s_saw_cw  = 0;
-//		xil_printf("CW turn\r\n");
-//	}
-//
-//	if (s_saw_ccw) {
-//		s_saw_ccw = 0;
-//		xil_printf("CCW turn\r\n");
-//	}
 
 	if (!enc_prev_press && (curr_press & ENC_BTN)) {
 		xil_printf("enc btn press\r\n");
@@ -409,7 +414,7 @@ int init_sampling_timer() {
 	 * into the timer counter when it is started
 	 */
 	// clk cycles / 100 Mhz = period
-	XTmrCtr_SetResetValue(&sampling_tmr, 0, 0xFFFFFFFF - RESET_VALUE);// 2267 clk cycles @ 100MHz = 22.67 us
+	XTmrCtr_SetResetValue(&sampling_tmr, 0, 0xFFFFFFFF - RESET_VALUE);// 2048 clk cycles @ 100MHz = 20.8 us
 	/*
 	 * Start the timer counter such that it's incrementing by default,
 	 * then wait for it to timeout a number of times
@@ -448,8 +453,8 @@ int init_pwm_timer() {
 	XTmrCtr_SetOptions(&pwm_tmr, 1, XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION | XTC_AUTO_RELOAD_OPTION);
 
 	// Set the Period (Frequency) in the first register (TLR0)
-	// We match the sampling frequency: 2267 ticks
-	// Side Note: we can decrease 2267 to a smaller number to increase the amount of 'pwm cycles' in one sampling cycle; this leads to a smoother signal because of analog filtering
+	// We match the sampling frequency: 2048 ticks
+	// Side Note: we can decrease 2048 to a smaller number to increase the amount of 'pwm cycles' in one sampling cycle; this leads to a smoother signal because of analog filtering
 	// think of channel 0 of the pwm_tmr as modifying the "Auto Reload Register (ARR)" of STM32 timers
 	XTmrCtr_SetResetValue(&pwm_tmr, 0, RESET_VALUE); //
 

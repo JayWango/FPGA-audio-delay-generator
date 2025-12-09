@@ -14,7 +14,7 @@
 #define NUM_INPUT_SAMPLES 5
 
 #define HP_FILTER_COEFF  1 // range from 0-256, higher = less filtering, lower = more filtering
-#define LP_FILTER_COEFF 50 // at a coeff of 1, the LPF is very aggressive; you can blow into mic and hear sound, but can't hear higher pitches
+#define LP_FILTER_COEFF 45 //at a coeff of 1, the LPF is very aggressive; you can blow into mic and hear sound, but can't hear higher pitches prev. 21
 
 #define AGC_THRESHOLD 350 // lower = more aggressive gain reduction
 #define AGC_MIN_GAIN 32 // prevents complete silence
@@ -22,6 +22,8 @@
 
 #define INPUT_LIMIT_THRESHOLD 400
 #define OUTPUT_LIMIT_THRESHOLD 400
+
+#define SAMPLES 5
 
 // defines for 5 pushbuttons
 #define BTN_MIDDLE  BTN4_MASK
@@ -42,6 +44,12 @@
 #define ENC_BTN     0x04
 
 // =====================================================
+// logging variables (declared as extern)
+extern volatile u32 sys_tick_counter;
+extern volatile int32_t curr_sample;
+
+extern volatile int32_t tiny_buffer[SAMPLES];
+
 void BSP_init();
 
 // encoder
