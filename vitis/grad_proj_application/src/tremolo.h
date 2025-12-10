@@ -27,10 +27,11 @@
 // ============================================================================
 // TREMOLO STATE VARIABLES (extern for access from bsp.c)
 // ============================================================================
-
+extern const uint8_t sine_table[TREMOLO_SINE_TABLE_SIZE];
 extern volatile u8 tremolo_enabled;      // Effect enable flag
 extern volatile u32 tremolo_rate;        // LFO rate (in 0.1 Hz units)
 extern volatile u32 tremolo_depth;       // Modulation depth
+extern volatile u8 tremolo_adjust_mode;
 
 // ============================================================================
 // FUNCTION PROTOTYPES

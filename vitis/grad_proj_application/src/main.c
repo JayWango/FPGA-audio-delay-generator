@@ -4,18 +4,6 @@
 
 unsigned seqf, seql, seq_old = 0;
 
-//void read_fsl_values(int n) {
-//   stream_grabber_start();
-//   stream_grabber_wait_enough_samples(n);
-//   seql = stream_grabber_read_seq_counter();
-//   seqf = stream_grabber_read_seq_counter_latched();
-//
-//   for(int i = 0; i < n; i++) {
-//      int_buffer[i] = stream_grabber_read_sample(i);
-//      xil_printf("int_buffer[i]: %d\n", int_buffer[i]);
-//   }
-//}
-
 int main() {
 	Xil_ICacheInvalidate();
 	Xil_ICacheEnable();
