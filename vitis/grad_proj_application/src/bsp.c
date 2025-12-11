@@ -3,6 +3,7 @@
 #include "encoder.h"
 #include "xil_printf.h"
 #include "tremolo.h"
+#include "chorus.h"
 
 XIntc sys_intc;
 XGpio enc;
@@ -10,12 +11,9 @@ XGpio pushBtn;
 XTmrCtr sampling_tmr; // axi_timer_0
 XTmrCtr pwm_tmr; // axi_timer_1
 
-// variables for delay
+// variables for delay buffer (shared by delay and chorus effects)
 volatile u32 circular_buffer[BUFFER_SIZE] = {0};
 volatile u32 write_head = 0;
-volatile u32 curr_read_head = 0;
-volatile u8 delay_enabled = 0;
-volatile u32 delay_samples = DELAY_SAMPLES_DEFAULT;
 volatile u32 samples_written = 0;
 
 // variables used in sampling_ISR() for printing statistics and collecting the DC offset of the raw data
@@ -45,7 +43,9 @@ void BSP_init() {
 	init_pwm_timer();
 	init_sampling_timer();
 
+	init_delay();
 	init_tremolo();
+	init_chorus();
 }
 
 // samples are grabbed from the streamer at 48828.125 Hz, so need to modify this sampling ISR to grab data at the same frequency
@@ -147,41 +147,36 @@ void sampling_ISR() {
 
     // ************************************************************************************************
 
+    // Write to circular buffer (shared by delay and chorus effects)
     circular_buffer[write_head] = limited_signal;
     samples_written++;
     write_head = (write_head + 1) % BUFFER_SIZE;
 
     int32_t mixed_signal = limited_signal;
     if (delay_enabled) {
-        // Only process delay if buffer has enough samples written
-        // Need at least delay_samples worth of data in buffer
-        if (samples_written > delay_samples) {
-            // Calculate read_head dynamically based on current write_head and delay_samples
-            // This ensures 'read_head' always points to data written 'delay_samples' ago
-            // We calculate it here in the ISR to avoid race conditions
-            curr_read_head = (write_head - delay_samples + BUFFER_SIZE) % BUFFER_SIZE;
-
-            int32_t delayed_signal = (int32_t)circular_buffer[curr_read_head];
-
-            // Mix dry (current) and wet (delayed) signals
-            int32_t dry_mixed = (limited_signal * DRY_MIX) >> 8;
-            int32_t wet_mixed = (delayed_signal * WET_MIX) >> 8;
-            mixed_signal = dry_mixed + wet_mixed;
-        }
+        mixed_signal = process_delay(mixed_signal, circular_buffer, BUFFER_SIZE, write_head, samples_written);
     }
 
     if (tremolo_enabled) {
     	mixed_signal = process_tremolo(mixed_signal);
     }
 
+    if (chorus_enabled) {
+    	// Only process chorus if buffer has enough samples written
+    	// Need at least chorus_delay + chorus_depth worth of data in buffer
+    	if (samples_written > (chorus_delay + chorus_depth)) {
+    		mixed_signal = process_chorus(mixed_signal, circular_buffer, BUFFER_SIZE, write_head);
+    	}
+    }
+
     // OUTPUT LIMITER -- i believe this is redundant
-    // int32_t output_signal = mixed_signal;
-    // if (output_signal > OUTPUT_LIMIT_THRESHOLD) {
-    // 	output_signal = OUTPUT_LIMIT_THRESHOLD;
-    // }
-    // else if (output_signal < -OUTPUT_LIMIT_THRESHOLD) {
-    // 	output_signal = -OUTPUT_LIMIT_THRESHOLD;
-    // }
+    int32_t output_signal = mixed_signal;
+    if (output_signal > OUTPUT_LIMIT_THRESHOLD) {
+    	output_signal = OUTPUT_LIMIT_THRESHOLD;
+    }
+    else if (output_signal < -OUTPUT_LIMIT_THRESHOLD) {
+    	output_signal = -OUTPUT_LIMIT_THRESHOLD;
+    }
 
     // re-center for PWM (unsigned output between 0 to 2048)
     // we add the mid-point of the PWM ticks (2048/2 = 1024) to turn the signed AC wave into a positive DC wave
@@ -249,6 +244,17 @@ void pushBtn_ISR(void *CallbackRef) {
 			xil_printf("Tremolo OFF\r\n");
 		}
 	}
+	else if ((time_between_press > DEBOUNCE_TIME) && (btn_val & BTN_MIDDLE)) {
+		btn_prev_press_time = btn_curr_press_time;
+		chorus_enabled = !chorus_enabled;
+		if (chorus_enabled) {
+			xil_printf("Chorus ON: rate=%lu.%lu Hz, delay=%lu, depth=%lu\r\n", 
+			           chorus_rate / 10, chorus_rate % 10, chorus_delay, chorus_depth);
+		}
+		else {
+			xil_printf("Chorus OFF\r\n");
+		}
+	}
 
 	XGpio_InterruptClear(GpioPtr, XGPIO_IR_CH1_MASK);
 }
@@ -287,27 +293,150 @@ void enc_ISR(void *CallbackRef) {
 		}
 	}
 	else if (tremolo_enabled) {
-		// Button 2: Adjust tremolo rate (modulation speed)
-		// CCW = slower (lower rate), CW = faster (higher rate)
-		if (s_saw_ccw) {
-			s_saw_ccw = 0;
-			if (tremolo_rate > TREMOLO_RATE_MIN) {
-				tremolo_rate -= 1;  // Slower rate (smaller step for finer control)
-			} else {
-				tremolo_rate = TREMOLO_RATE_MIN;
+		// Adjust tremolo parameters based on tremolo_adjust_mode
+		// Mode 0: Adjust rate (modulation speed)
+		// Mode 1: Adjust depth (modulation amount)
+		if (tremolo_adjust_mode == 0) {
+			// Adjust tremolo rate (modulation speed)
+			// CCW = slower (lower rate), CW = faster (higher rate)
+			if (s_saw_ccw) {
+				s_saw_ccw = 0;
+				if (tremolo_rate > TREMOLO_RATE_MIN) {
+					tremolo_rate -= 1;  // Slower rate (smaller step for finer control)
+				} else {
+					tremolo_rate = TREMOLO_RATE_MIN;
+				}
+				update_tremolo_phase_inc();  // Recalculate phase increment (avoid division in ISR)
+				xil_printf("Tremolo rate: %lu.%lu Hz - Slower\r\n", tremolo_rate / 10, tremolo_rate % 10);
 			}
-			update_tremolo_phase_inc();  // Recalculate phase increment (avoid division in ISR)
-			xil_printf("Tremolo rate: %lu (~%.1f Hz) - Slower\r\n", tremolo_rate, (tremolo_rate * 0.1f));
+			if (s_saw_cw) {
+				s_saw_cw = 0;
+				if (tremolo_rate < TREMOLO_RATE_MAX) {
+					tremolo_rate += 1;  // Faster rate
+				} else {
+					tremolo_rate = TREMOLO_RATE_MAX;  // Clamp at max
+				}
+				update_tremolo_phase_inc();  // Recalculate phase increment (avoid division in ISR)
+				xil_printf("Tremolo rate: %lu.%lu Hz - Faster\r\n", tremolo_rate / 10, tremolo_rate % 10);
+			}
 		}
-		if (s_saw_cw) {
-			s_saw_cw = 0;
-			if (tremolo_rate < TREMOLO_RATE_MAX) {
-				tremolo_rate += 1;  // Faster rate
-			} else {
-				tremolo_rate = TREMOLO_RATE_MAX;  // Clamp at max
+		else {
+			// Adjust tremolo depth (modulation amount)
+			// CCW = less depth, CW = more depth
+			if (s_saw_ccw) {
+				s_saw_ccw = 0;
+				if (tremolo_depth > TREMOLO_DEPTH_MIN) {
+					tremolo_depth -= 4;  // Less depth (step of 4 for reasonable adjustment)
+					if (tremolo_depth < TREMOLO_DEPTH_MIN) {
+						tremolo_depth = TREMOLO_DEPTH_MIN;
+					}
+				} else {
+					tremolo_depth = TREMOLO_DEPTH_MIN;
+				}
+				xil_printf("Tremolo depth: %lu (~%lu%%) - Less\r\n", tremolo_depth, (tremolo_depth * 100) / 256);
 			}
-			update_tremolo_phase_inc();  // Recalculate phase increment (avoid division in ISR)
-			xil_printf("Tremolo rate: %lu (max=%lu) - Faster\r\n", tremolo_rate, TREMOLO_RATE_MAX);
+			if (s_saw_cw) {
+				s_saw_cw = 0;
+				if (tremolo_depth < TREMOLO_DEPTH_MAX) {
+					tremolo_depth += 4;  // More depth
+					if (tremolo_depth > TREMOLO_DEPTH_MAX) {
+						tremolo_depth = TREMOLO_DEPTH_MAX;
+					}
+				} else {
+					tremolo_depth = TREMOLO_DEPTH_MAX;  // Clamp at max
+				}
+				xil_printf("Tremolo depth: %lu (~%lu%%) - More\r\n", tremolo_depth, (tremolo_depth * 100) / 256);
+			}
+		}
+	}
+	else if (chorus_enabled) {
+		// Adjust chorus parameters based on chorus_adjust_mode
+		// Mode 0: Adjust rate (modulation speed)
+		// Mode 1: Adjust delay (base delay time)
+		// Mode 2: Adjust depth (modulation amount)
+		if (chorus_adjust_mode == 0) {
+			// Adjust chorus rate (modulation speed)
+			// CCW = slower (lower rate), CW = faster (higher rate)
+			if (s_saw_ccw) {
+				s_saw_ccw = 0;
+				if (chorus_rate > CHORUS_RATE_MIN) {
+					chorus_rate -= 1;  // Slower rate (smaller step for finer control)
+				} else {
+					chorus_rate = CHORUS_RATE_MIN;
+				}
+				update_chorus_phase_inc();  // Recalculate phase increment (avoid division in ISR)
+				xil_printf("Chorus rate: %lu.%lu Hz - Slower\r\n", chorus_rate / 10, chorus_rate % 10);
+			}
+			if (s_saw_cw) {
+				s_saw_cw = 0;
+				if (chorus_rate < CHORUS_RATE_MAX) {
+					chorus_rate += 1;  // Faster rate
+				} else {
+					chorus_rate = CHORUS_RATE_MAX;  // Clamp at max
+				}
+				update_chorus_phase_inc();  // Recalculate phase increment (avoid division in ISR)
+				xil_printf("Chorus rate: %lu.%lu Hz - Faster\r\n", chorus_rate / 10, chorus_rate % 10);
+			}
+		}
+		else if (chorus_adjust_mode == 1) {
+			// Adjust chorus delay (base delay time)
+			// CCW = shorter delay, CW = longer delay
+			if (s_saw_ccw) {
+				s_saw_ccw = 0;
+				if (chorus_delay > CHORUS_DELAY_MIN) {
+					chorus_delay -= CHORUS_DELAY_ADJUST_STEP;
+					if (chorus_delay < CHORUS_DELAY_MIN) {
+						chorus_delay = CHORUS_DELAY_MIN;
+					}
+				} else {
+					chorus_delay = CHORUS_DELAY_MIN;
+				}
+				xil_printf("Chorus delay: %lu samples (~%lu ms) - Shorter\r\n", 
+				           chorus_delay, (chorus_delay * 1000) / 48000);
+			}
+			if (s_saw_cw) {
+				s_saw_cw = 0;
+				if (chorus_delay < CHORUS_DELAY_MAX) {
+					chorus_delay += CHORUS_DELAY_ADJUST_STEP;
+					if (chorus_delay > CHORUS_DELAY_MAX) {
+						chorus_delay = CHORUS_DELAY_MAX;
+					}
+				} else {
+					chorus_delay = CHORUS_DELAY_MAX;  // Clamp at max
+				}
+				xil_printf("Chorus delay: %lu samples (~%lu ms) - Longer\r\n", 
+				           chorus_delay, (chorus_delay * 1000) / 48000);
+			}
+		}
+		else {
+			// Adjust chorus depth (modulation amount)
+			// CCW = less depth, CW = more depth
+			if (s_saw_ccw) {
+				s_saw_ccw = 0;
+				if (chorus_depth > CHORUS_DEPTH_MIN) {
+					chorus_depth -= CHORUS_DEPTH_ADJUST_STEP;
+					if (chorus_depth < CHORUS_DEPTH_MIN) {
+						chorus_depth = CHORUS_DEPTH_MIN;
+					}
+				} else {
+					chorus_depth = CHORUS_DEPTH_MIN;
+				}
+				xil_printf("Chorus depth: %lu samples (~%lu ms) - Less\r\n", 
+				           chorus_depth, (chorus_depth * 1000) / 48000);
+			}
+			if (s_saw_cw) {
+				s_saw_cw = 0;
+				if (chorus_depth < CHORUS_DEPTH_MAX) {
+					chorus_depth += CHORUS_DEPTH_ADJUST_STEP;
+					if (chorus_depth > CHORUS_DEPTH_MAX) {
+						chorus_depth = CHORUS_DEPTH_MAX;
+					}
+				} else {
+					chorus_depth = CHORUS_DEPTH_MAX;  // Clamp at max
+				}
+				xil_printf("Chorus depth: %lu samples (~%lu ms) - More\r\n", 
+				           chorus_depth, (chorus_depth * 1000) / 48000);
+			}
 		}
 	}
 	else {
@@ -323,7 +452,33 @@ void enc_ISR(void *CallbackRef) {
 	}
 
 	if (!enc_prev_press && (curr_press & ENC_BTN)) {
-		xil_printf("enc btn press\r\n");
+		// Encoder button pressed - toggle adjustment mode if effect is enabled
+		if (tremolo_enabled) {
+			tremolo_adjust_mode = !tremolo_adjust_mode;  // Toggle between rate and depth
+			if (tremolo_adjust_mode == 0) {
+				xil_printf("Tremolo: Adjusting RATE (current: %lu.%lu Hz)\r\n", 
+				           tremolo_rate / 10, tremolo_rate % 10);
+			} else {
+				xil_printf("Tremolo: Adjusting DEPTH (current: %lu%%)\r\n", 
+				           (tremolo_depth * 100) / 256);
+			}
+		}
+		else if (chorus_enabled) {
+			chorus_adjust_mode = (chorus_adjust_mode + 1) % 3;  // Cycle through: rate, delay, depth
+			if (chorus_adjust_mode == 0) {
+				xil_printf("Chorus: Adjusting RATE (current: %lu.%lu Hz)\r\n", 
+				           chorus_rate / 10, chorus_rate % 10);
+			} else if (chorus_adjust_mode == 1) {
+				xil_printf("Chorus: Adjusting DELAY (current: %lu samples, ~%lu ms)\r\n", 
+				           chorus_delay, (chorus_delay * 1000) / 48000);
+			} else {
+				xil_printf("Chorus: Adjusting DEPTH (current: %lu samples, ~%lu ms)\r\n", 
+				           chorus_depth, (chorus_depth * 1000) / 48000);
+			}
+		}
+		else {
+			xil_printf("enc btn press\r\n");
+		}
 	}
 
 	enc_prev_press = curr_press & ENC_BTN; // to prevent interrupts from constantly firing when button is held down

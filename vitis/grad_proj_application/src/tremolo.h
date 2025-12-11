@@ -24,6 +24,9 @@
 // Sine table size (must be power of 2 for efficient wrapping)
 #define TREMOLO_SINE_TABLE_SIZE   256
 
+// Shared sine lookup table (defined in tremolo.c, used by tremolo and chorus)
+extern const uint8_t sine_table[TREMOLO_SINE_TABLE_SIZE];
+
 // ============================================================================
 // TREMOLO STATE VARIABLES (extern for access from bsp.c)
 // ============================================================================
@@ -31,6 +34,7 @@
 extern volatile u8 tremolo_enabled;      // Effect enable flag
 extern volatile u32 tremolo_rate;        // LFO rate (in 0.1 Hz units)
 extern volatile u32 tremolo_depth;       // Modulation depth
+extern volatile u8 tremolo_adjust_mode;  // 0 = adjust rate, 1 = adjust depth
 
 // ============================================================================
 // FUNCTION PROTOTYPES

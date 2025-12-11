@@ -9,7 +9,8 @@
 // Values range from 0 to 255 (8-bit), representing 0 to 2π
 // This gives us smooth tremolo modulation without expensive sine calculations
 // this table was generated using the formula: sine_table[i] = 128 + 127 * sin ((i * 2pi) / 256)
-static const uint8_t sine_table[TREMOLO_SINE_TABLE_SIZE] = {
+// Shared with chorus effect
+const uint8_t sine_table[TREMOLO_SINE_TABLE_SIZE] = {
     128, 131, 134, 137, 140, 143, 146, 149, 152, 155, 158, 161, 164, 167, 170, 173,
     176, 179, 182, 185, 187, 190, 193, 195, 198, 201, 203, 206, 208, 210, 213, 215,
     217, 219, 222, 224, 226, 228, 230, 231, 233, 235, 236, 238, 240, 241, 242, 244,
@@ -35,6 +36,7 @@ static const uint8_t sine_table[TREMOLO_SINE_TABLE_SIZE] = {
 volatile u8 tremolo_enabled = 0;
 volatile u32 tremolo_rate = TREMOLO_RATE_DEFAULT;
 volatile u32 tremolo_depth = TREMOLO_DEPTH_DEFAULT;
+volatile u8 tremolo_adjust_mode = 0;  // 0 = rate, 1 = depth
 
 // Internal state (not exposed externally)
 static volatile uint32_t tremolo_lfo_phase = 0;        // LFO phase accumulator (0 to TREMOLO_SINE_TABLE_SIZE-1)
@@ -133,6 +135,7 @@ void init_tremolo(void) {
     tremolo_enabled = 0;
     tremolo_rate = TREMOLO_RATE_DEFAULT;
     tremolo_depth = TREMOLO_DEPTH_DEFAULT;
+    tremolo_adjust_mode = 0;  // Start with rate adjustment
     tremolo_lfo_phase = 0;
     update_tremolo_phase_inc();
 }
