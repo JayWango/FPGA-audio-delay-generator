@@ -14,8 +14,8 @@
 #define CHORUS_RATE_DEFAULT      25    // 1.0 Hz default
 
 // Chorus delay range (base delay in samples)
-#define CHORUS_DELAY_MIN         200   // ~2ms at 48kHz
-#define CHORUS_DELAY_MAX         1500  // ~31ms at 48kHz
+#define CHORUS_DELAY_MIN         1000   // ~2ms at 48kHz
+#define CHORUS_DELAY_MAX         35000  // ~31ms at 48kHz
 #define CHORUS_DELAY_DEFAULT     1000   // ~10ms at 48kHz default // 800
 
 // Chorus modulation depth (delay variation in samples)
@@ -24,7 +24,7 @@
 #define CHORUS_DEPTH_DEFAULT     150    // 1ms modulation default // 120
 
 // Adjust step sizes for encoder
-#define CHORUS_DELAY_ADJUST_STEP 50
+#define CHORUS_DELAY_ADJUST_STEP 1000
 #define CHORUS_DEPTH_ADJUST_STEP 10
 
 // Sample rate (Hz)
