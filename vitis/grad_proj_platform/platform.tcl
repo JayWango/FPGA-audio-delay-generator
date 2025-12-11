@@ -30,3 +30,6 @@ platform clean
 platform generate
 platform clean
 platform generate
+platform config -updatehw {/home/jasonwang/Desktop/ece253/grad_proj/vivado/grad_proj_hw_platform.xsa}
+platform clean
+platform generate

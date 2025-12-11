@@ -1578,3 +1578,614 @@ con
 
 14:39:09 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/pwm_test.tcl'
 14:39:26 INFO  : Disconnected from the channel tcfchan#10.
+15:15:37 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:15:38 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:15:38 INFO  : 'jtag frequency' command is executed.
+15:15:38 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:15:40 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit"
+15:15:40 INFO  : Context for processor 'microblaze_0' is selected.
+15:15:40 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa'.
+15:15:40 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:15:40 INFO  : Context for processor 'microblaze_0' is selected.
+15:15:40 INFO  : System reset is completed.
+15:15:43 INFO  : 'after 3000' command is executed.
+15:15:43 INFO  : Context for processor 'microblaze_0' is selected.
+15:15:43 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:15:43 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:15:43 INFO  : Context for processor 'microblaze_0' is selected.
+15:15:43 INFO  : 'con' command is executed.
+15:15:43 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:15:43 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/pwm_test.tcl'
+15:16:00 INFO  : Disconnected from the channel tcfchan#11.
+15:16:30 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:16:33 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:16:33 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:16:33 INFO  : 'jtag frequency' command is executed.
+15:16:33 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:16:35 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit"
+15:16:35 INFO  : Context for processor 'microblaze_0' is selected.
+15:16:35 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa'.
+15:16:35 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:16:35 INFO  : Context for processor 'microblaze_0' is selected.
+15:16:35 INFO  : System reset is completed.
+15:16:38 INFO  : 'after 3000' command is executed.
+15:16:38 INFO  : Context for processor 'microblaze_0' is selected.
+15:16:39 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:16:39 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:16:39 INFO  : Context for processor 'microblaze_0' is selected.
+15:16:39 INFO  : 'con' command is executed.
+15:16:39 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:16:39 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/pwm_test.tcl'
+15:17:03 INFO  : Disconnected from the channel tcfchan#12.
+15:17:29 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:17:32 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:17:32 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:17:32 INFO  : 'jtag frequency' command is executed.
+15:17:32 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:17:34 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit"
+15:17:34 INFO  : Context for processor 'microblaze_0' is selected.
+15:17:34 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa'.
+15:17:34 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:17:34 INFO  : Context for processor 'microblaze_0' is selected.
+15:17:34 INFO  : System reset is completed.
+15:17:38 INFO  : 'after 3000' command is executed.
+15:17:38 INFO  : Context for processor 'microblaze_0' is selected.
+15:17:38 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:17:38 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:17:38 INFO  : Context for processor 'microblaze_0' is selected.
+15:17:38 INFO  : 'con' command is executed.
+15:17:38 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:17:38 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/pwm_test.tcl'
+15:17:48 INFO  : Disconnected from the channel tcfchan#13.
+15:18:08 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:18:10 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:18:10 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:18:10 INFO  : 'jtag frequency' command is executed.
+15:18:10 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:18:12 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit"
+15:18:12 INFO  : Context for processor 'microblaze_0' is selected.
+15:18:12 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa'.
+15:18:13 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:18:13 INFO  : Context for processor 'microblaze_0' is selected.
+15:18:13 INFO  : System reset is completed.
+15:18:16 INFO  : 'after 3000' command is executed.
+15:18:16 INFO  : Context for processor 'microblaze_0' is selected.
+15:18:16 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:18:16 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_pwm_test.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:18:16 INFO  : Context for processor 'microblaze_0' is selected.
+15:18:16 INFO  : 'con' command is executed.
+15:18:16 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:18:16 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/pwm_test.tcl'
+15:18:24 INFO  : Disconnected from the channel tcfchan#14.
+15:31:52 INFO  : Hardware specification for platform project 'grad_proj_platform' is updated.
+15:34:00 INFO  : Result from executing command 'removePlatformRepo': 
+15:34:34 INFO  : Result from executing command 'getProjects': grad_proj_platform
+15:34:34 INFO  : Result from executing command 'getPlatforms': xilinx_vck190_base_202210_1|/ece/Xilinx/Vitis/2022.1/base_platforms/xilinx_vck190_base_202210_1/xilinx_vck190_base_202210_1.xpfm;xilinx_vck190_base_dfx_202210_1|/ece/Xilinx/Vitis/2022.1/base_platforms/xilinx_vck190_base_dfx_202210_1/xilinx_vck190_base_dfx_202210_1.xpfm;xilinx_vmk180_base_202210_1|/ece/Xilinx/Vitis/2022.1/base_platforms/xilinx_vmk180_base_202210_1/xilinx_vmk180_base_202210_1.xpfm;xilinx_zcu102_base_202210_1|/ece/Xilinx/Vitis/2022.1/base_platforms/xilinx_zcu102_base_202210_1/xilinx_zcu102_base_202210_1.xpfm;xilinx_zcu102_base_dfx_202210_1|/ece/Xilinx/Vitis/2022.1/base_platforms/xilinx_zcu102_base_dfx_202210_1/xilinx_zcu102_base_dfx_202210_1.xpfm;xilinx_zcu104_base_202210_1|/ece/Xilinx/Vitis/2022.1/base_platforms/xilinx_zcu104_base_202210_1/xilinx_zcu104_base_202210_1.xpfm
+15:37:33 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:37:46 INFO  : The hardware specification used by project 'grad_proj_application' is out of sync with the platform. Resource files extracted from the hardware specification will be updated.
+15:37:46 INFO  : The file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.bit' stored in project is removed.
+15:37:46 INFO  : The file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_pwm_test.mmi' stored in project is removed.
+15:37:46 INFO  : The updated bitstream files are copied from platform to folder '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream' in project 'grad_proj_application'.
+15:37:47 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:37:48 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:37:48 INFO  : 'jtag frequency' command is executed.
+15:37:48 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:37:50 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+15:37:50 INFO  : Context for processor 'microblaze_0' is selected.
+15:37:50 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+15:37:50 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:37:50 INFO  : Context for processor 'microblaze_0' is selected.
+15:37:50 INFO  : System reset is completed.
+15:37:53 INFO  : 'after 3000' command is executed.
+15:37:53 INFO  : Context for processor 'microblaze_0' is selected.
+15:37:53 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:37:53 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:37:53 INFO  : Context for processor 'microblaze_0' is selected.
+15:37:53 INFO  : 'con' command is executed.
+15:37:53 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:37:53 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+15:38:18 INFO  : Disconnected from the channel tcfchan#17.
+15:44:50 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:45:02 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:45:04 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:45:14 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+----------------End of Script----------------
+
+15:45:14 ERROR : Could not find FPGA device on the board for connection 'Local'.
+
+
+Troubleshooting hints:
+1. Check whether board is connected to system properly.
+2. In case of zynq board, check whether Digilent/Xilinx cable switch settings are correct.
+3. If you are using Xilinx Platform Cable USB, ensure that status LED is green.
+15:45:24 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:45:24 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:45:24 INFO  : 'jtag frequency' command is executed.
+15:45:25 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:45:27 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+15:45:27 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:27 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+15:45:27 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:45:27 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:27 INFO  : System reset is completed.
+15:45:30 INFO  : 'after 3000' command is executed.
+15:45:30 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:30 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:45:30 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:45:30 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:30 INFO  : 'con' command is executed.
+15:45:30 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:45:30 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+15:45:38 INFO  : Disconnected from the channel tcfchan#18.
+15:45:44 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:45:46 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:45:47 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:45:47 INFO  : 'jtag frequency' command is executed.
+15:45:47 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:45:49 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+15:45:49 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:49 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+15:45:49 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:45:49 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:49 INFO  : System reset is completed.
+15:45:52 INFO  : 'after 3000' command is executed.
+15:45:52 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:52 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:45:52 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:45:52 INFO  : Context for processor 'microblaze_0' is selected.
+15:45:52 INFO  : 'con' command is executed.
+15:45:52 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:45:52 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+15:46:46 INFO  : Disconnected from the channel tcfchan#19.
+15:47:05 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:47:08 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:47:08 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:47:08 INFO  : 'jtag frequency' command is executed.
+15:47:08 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:47:11 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+15:47:11 INFO  : Context for processor 'microblaze_0' is selected.
+15:47:11 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+15:47:11 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:47:11 INFO  : Context for processor 'microblaze_0' is selected.
+15:47:11 INFO  : System reset is completed.
+15:47:14 INFO  : 'after 3000' command is executed.
+15:47:14 INFO  : Context for processor 'microblaze_0' is selected.
+15:47:14 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:47:14 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:47:14 INFO  : Context for processor 'microblaze_0' is selected.
+15:47:14 INFO  : 'con' command is executed.
+15:47:14 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:47:14 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+15:48:39 INFO  : Disconnected from the channel tcfchan#20.
+15:54:31 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:54:34 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:54:34 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:54:34 INFO  : 'jtag frequency' command is executed.
+15:54:34 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:54:37 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+15:54:37 INFO  : Context for processor 'microblaze_0' is selected.
+15:54:37 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+15:54:37 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:54:37 INFO  : Context for processor 'microblaze_0' is selected.
+15:54:37 INFO  : System reset is completed.
+15:54:40 INFO  : 'after 3000' command is executed.
+15:54:40 INFO  : Context for processor 'microblaze_0' is selected.
+15:54:40 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:54:40 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:54:40 INFO  : Context for processor 'microblaze_0' is selected.
+15:54:40 INFO  : 'con' command is executed.
+15:54:40 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:54:40 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+15:54:58 INFO  : Disconnected from the channel tcfchan#21.
+15:56:46 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+15:56:49 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+15:56:49 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+15:56:49 INFO  : 'jtag frequency' command is executed.
+15:56:49 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+15:56:51 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+15:56:51 INFO  : Context for processor 'microblaze_0' is selected.
+15:56:51 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+15:56:51 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+15:56:51 INFO  : Context for processor 'microblaze_0' is selected.
+15:56:51 INFO  : System reset is completed.
+15:56:54 INFO  : 'after 3000' command is executed.
+15:56:55 INFO  : Context for processor 'microblaze_0' is selected.
+15:56:55 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+15:56:55 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+15:56:55 INFO  : Context for processor 'microblaze_0' is selected.
+15:56:55 INFO  : 'con' command is executed.
+15:56:55 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+15:56:55 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+15:57:08 INFO  : Disconnected from the channel tcfchan#22.
+16:07:08 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+16:07:12 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+16:07:12 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+16:07:12 INFO  : 'jtag frequency' command is executed.
+16:07:12 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+16:07:14 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+16:07:14 INFO  : Context for processor 'microblaze_0' is selected.
+16:07:15 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+16:07:15 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+16:07:15 INFO  : Context for processor 'microblaze_0' is selected.
+16:07:15 INFO  : System reset is completed.
+16:07:18 INFO  : 'after 3000' command is executed.
+16:07:18 INFO  : Context for processor 'microblaze_0' is selected.
+16:07:18 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+16:07:18 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+16:07:18 INFO  : Context for processor 'microblaze_0' is selected.
+16:07:18 INFO  : 'con' command is executed.
+16:07:18 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+16:07:18 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+16:10:16 INFO  : Disconnected from the channel tcfchan#23.
+16:21:09 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+16:21:14 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+16:21:15 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+16:21:15 INFO  : 'jtag frequency' command is executed.
+16:21:15 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+16:21:17 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+16:21:17 INFO  : Context for processor 'microblaze_0' is selected.
+16:21:17 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+16:21:17 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+16:21:17 INFO  : Context for processor 'microblaze_0' is selected.
+16:21:17 INFO  : System reset is completed.
+16:21:20 INFO  : 'after 3000' command is executed.
+16:21:20 INFO  : Context for processor 'microblaze_0' is selected.
+16:21:21 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+16:21:21 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+16:21:21 INFO  : Context for processor 'microblaze_0' is selected.
+16:21:21 INFO  : 'con' command is executed.
+16:21:21 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+16:21:21 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+16:21:53 INFO  : Disconnected from the channel tcfchan#24.
+16:22:11 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+16:22:14 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+16:22:14 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+16:22:14 INFO  : 'jtag frequency' command is executed.
+16:22:14 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+16:22:17 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+16:22:17 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:17 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+16:22:17 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+16:22:17 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:17 INFO  : System reset is completed.
+16:22:20 INFO  : 'after 3000' command is executed.
+16:22:20 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:20 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+16:22:20 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+16:22:20 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:20 INFO  : 'con' command is executed.
+16:22:20 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+16:22:20 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+16:22:44 INFO  : Disconnected from the channel tcfchan#25.
+16:22:47 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+16:22:47 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+16:22:47 INFO  : 'jtag frequency' command is executed.
+16:22:48 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+16:22:50 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+16:22:50 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:50 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+16:22:50 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+16:22:50 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:50 INFO  : System reset is completed.
+16:22:53 INFO  : 'after 3000' command is executed.
+16:22:53 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:53 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+16:22:53 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+16:22:53 INFO  : Context for processor 'microblaze_0' is selected.
+16:22:53 INFO  : 'con' command is executed.
+16:22:53 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+16:22:53 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+16:24:21 INFO  : Disconnected from the channel tcfchan#26.
+16:24:37 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+16:24:40 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+16:24:41 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+16:24:41 INFO  : 'jtag frequency' command is executed.
+16:24:41 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+16:24:43 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+16:24:43 INFO  : Context for processor 'microblaze_0' is selected.
+16:24:43 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+16:24:43 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+16:24:43 INFO  : Context for processor 'microblaze_0' is selected.
+16:24:43 INFO  : System reset is completed.
+16:24:46 INFO  : 'after 3000' command is executed.
+16:24:46 INFO  : Context for processor 'microblaze_0' is selected.
+16:24:46 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+16:24:46 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+16:24:46 INFO  : Context for processor 'microblaze_0' is selected.
+16:24:46 INFO  : 'con' command is executed.
+16:24:46 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+16:24:46 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+16:25:31 INFO  : Disconnected from the channel tcfchan#27.
+16:28:46 INFO  : Checking for BSP changes to sync application flags for project 'grad_proj_application'...
+16:28:49 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+16:28:49 INFO  : Jtag cable 'Digilent Nexys A7 -100T 210292BCFA4CA' is selected.
+16:28:49 INFO  : 'jtag frequency' command is executed.
+16:28:50 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}' command is executed.
+16:28:52 INFO  : Device configured successfully with "/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit"
+16:28:52 INFO  : Context for processor 'microblaze_0' is selected.
+16:28:52 INFO  : Hardware design and registers information is loaded from '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa'.
+16:28:52 INFO  : 'configparams mdm-detect-bscan-mask 2' command is executed.
+16:28:52 INFO  : Context for processor 'microblaze_0' is selected.
+16:28:52 INFO  : System reset is completed.
+16:28:55 INFO  : 'after 3000' command is executed.
+16:28:55 INFO  : Context for processor 'microblaze_0' is selected.
+16:28:55 INFO  : The application '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf' is downloaded to processor 'microblaze_0'.
+16:28:55 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+targets -set -filter {jtag_cable_name =~ "Digilent Nexys A7 -100T 210292BCFA4CA" && level==0 && jtag_device_ctx=="jsn-Nexys A7 -100T-210292BCFA4CA-13631093-0"}
+fpga -file /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/_ide/bitstream/grad_proj_hw_platform.bit
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+loadhw -hw /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_platform/export/grad_proj_platform/hw/grad_proj_hw_platform.xsa -regs
+configparams mdm-detect-bscan-mask 2
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+rst -system
+after 3000
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+dow /home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application/Debug/grad_proj_application.elf
+----------------End of Script----------------
+
+16:28:55 INFO  : Context for processor 'microblaze_0' is selected.
+16:28:55 INFO  : 'con' command is executed.
+16:28:55 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "*microblaze*#0" && bscan=="USER2" }
+con
+----------------End of Script----------------
+
+16:28:55 INFO  : Launch script is exported to file '/home/jasonwang/Desktop/ece253/grad_proj/vitis/grad_proj_application_system/_ide/scripts/debugger_grad_proj_application-default.tcl'
+16:29:58 INFO  : Disconnected from the channel tcfchan#28.
